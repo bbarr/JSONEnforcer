@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+</head>
+<body>
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+  <script src="../lib/json_enforcer.js"></script>
+  <script src="template.js"></script>
+  <script>
+    
+    var template = new JSONEnforcer({
+      a: 'string required',
+      b: [ 'number' ],
+      c: {
+        d: 'array required',
+      }
+    });
+    
+    var data = {
+      a: 'some string',
+      b: [ 2, 5, 10, 22 ],
+      c: {
+        d: [ 'a', 'r', 'r', 'a', 'y', 2 ]
+      }
+    }
+    
+    template.ensure(data); // => PASS
+    
+    data = {
+      a: '',
+      c: {
+        d: []
+      }
+    }
+    
+    template.ensure(data); // => PASS
+    
+    data = {
+      b: [ 2, 3 ]
+      c: {
+        d: [ 'a', 5 ]
+      }
+    }
+    
+    tempate.ensure(data); // => FAIL
+    
+  </script>
+</body>
+</html>
