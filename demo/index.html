@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+</head>
+<body>
+  
+  <div id="results"></div>
+  
+  <script>
+    
+    var enforcer = new JSONEnforcer({
+      a: 'string',
+      b: [ 'number' ],
+      c: {
+        d: 'string required'
+      }
+    });
+
+    // => PASSES    
+    enforcer.ensure({
+      a: 'It was the best of times,',
+      b: [ 2, 55 ],
+      c: {
+        d: 'It was the worst of times.'
+      }
+    });
+
+    // => PASSES
+    enforcer.ensure({
+      c: {
+        d: 'The end'
+      }
+    });
+    
+  </script>
+</body>
+</html>
