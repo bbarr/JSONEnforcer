@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  
+  <title>NP JSON Test Runner</title>
+  
+  <!-- core testing files -->
+  <link rel="stylesheet" type="text/css" href="lib/jasmine.css">
+  <script type="text/javascript" src="lib/jasmine.js"></script>
+  <script type="text/javascript" src="lib/jasmine-html.js"></script>
+  <script type="text/javascript" src="../lib/json_enforcer.js"></script>  
+  <script type="text/javascript" src="json_enforcer_spec.js"></script>
+  
+</head>
+<body>  
+  <script type="text/javascript">
+    jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
+    jasmine.getEnv().execute();
+  </script>
+</body>
+</html>
