@@ -5,33 +5,46 @@
 </head>
 <body>
   
-  <div id="results"></div>
-  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+  <script src="../lib/json_enforcer.js"></script>
+  <script src="template.js"></script>
   <script>
     
-    var enforcer = new JSONEnforcer({
-      a: 'string',
+    var template = new JSONEnforcer({
+      a: 'string required',
       b: [ 'number' ],
       c: {
-        d: 'string required'
+        d: 'array required',
       }
     });
-
-    // => PASSES    
-    enforcer.ensure({
-      a: 'It was the best of times,',
-      b: [ 2, 55 ],
+    
+    var data = {
+      a: 'some string',
+      b: [ 2, 5, 10, 22 ],
       c: {
-        d: 'It was the worst of times.'
+        d: [ 'a', 'r', 'r', 'a', 'y', 2 ]
       }
-    });
-
-    // => PASSES
-    enforcer.ensure({
+    }
+    
+    template.ensure(data); // => PASS
+    
+    data = {
+      a: '',
       c: {
-        d: 'The end'
+        d: []
       }
-    });
+    }
+    
+    template.ensure(data); // => PASS
+    
+    data = {
+      b: [ 2, 3 ]
+      c: {
+        d: [ 'a', 5 ]
+      }
+    }
+    
+    tempate.ensure(data); // => FAIL
     
   </script>
 </body>
