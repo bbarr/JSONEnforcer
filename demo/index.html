@@ -10,39 +10,15 @@
   <script>
     
     var template = new JSONEnforcer.Template({
-      a: 'string optional',
-      b: [ 'number optional' ],
-      c: {
-        d: 'array',
-      }
+      a: 'string(hi\\d)',
+      b: 'number(10,15)'
     });
     
     var data = {
-      a: 'some string',
-      b: [ 2, 5, 10, 22 ],
-      c: {
-        d: [ 'a', 'r', 'r', 'a', 'y', 2 ]
-      }
+      a: 'hi3'
     }
     
     console.log(template.enforce(data)); // => PASS
-    
-    data = {
-      c: {
-        d: []
-      }
-    }
-    
-    console.log(template.enforce(data)); // => PASS
-    
-    data = {
-      b: [ 2, 3 ],
-      c: {
-        d: [ 'a', 5 ]
-      }
-    }
-    
-    console.log(template.enforce(data)); // => FAIL
     
     console.log(template.stub())
     

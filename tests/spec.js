@@ -1,46 +1,194 @@
-describe ('JSONEnforcer.Template', function() {
+describe ('Utilities', function() {
 
-  describe ('type checking', function() {
+  describe('#is_string', function() {
 
-    var util = JSONEnforcer.util,
-        a_string = '', a_number = 0, an_array = [], an_object = {};
+    it ('should return true for a string', function() {
+      expect(JSONEnforcer.__exec__('util.is_string()', '')).toBe(true);
+    });
+  });
 
-    describe('#is_string', function() {
+  describe('#is_number', function() {
 
-      it ('should return true for a string', function() {
-        expect(util.is_string(a_string)).toBe(true);
+    it ('should return true for a number', function() {
+      expect(JSONEnforcer.__exec__('util.is_number()', 11)).toBe(true);
+    });
+  });
+
+  describe('#is_array', function() {
+
+    it ('should return true for an array', function() {
+      expect(JSONEnforcer.__exec__('util.is_array()', [])).toBe(true);
+    });
+
+    it ('should fail for an object', function() {
+      expect(JSONEnforcer.__exec__('util.is_array()', {})).toBe(false);
+    });
+  });
+
+  describe('#is_object', function() {
+
+    it ('should return true for an object', function() {
+      expect(JSONEnforcer.__exec__('util.is_object()', {})).toBe(true);
+    });
+
+    it ('should fail for an array', function() {
+      expect(JSONEnforcer.__exec__('util.is_object()', [])).toBe(false);
+    });
+  });
+  
+});
+
+describe ('Rules', function() {
+  
+  var Rules = JSONEnforcer.__exec__('Rules');
+  
+  it ('should parse validations for strings', function() {
+    var rules = new Rules('string(\\w+)');
+    expect(rules.validation).toEqual(/\w+/);
+  });
+  
+  it ('should parse range for numbers', function() {
+    var rules = new Rules('number(1,3)');
+    expect(rules.range).toEqual([1,3]);
+  });
+});
+
+describe ('Lexer', function() {
+  
+  var Lexer = JSONEnforcer.__exec__('Lexer');
+  
+  describe ('tokenization', function() {
+    
+    it ('should tokenize literal', function() {
+      var lex = new Lexer("abc");
+      lex._tokenize();
+      expect(lex.tokenized[0].name).toEqual('literal');
+      expect(lex.tokenized[0].value).toEqual('a');
+      expect(lex.tokenized[1].name).toEqual('literal');
+      expect(lex.tokenized[1].value).toEqual('b');
+      expect(lex.tokenized[2].name).toEqual('literal');
+      expect(lex.tokenized[2].value).toEqual('c');        
+    });
+
+    it ('should tokenize special', function() {
+      var lex = new Lexer('\\w');
+      lex._tokenize();
+      expect(lex.tokenized[0].name).toEqual('special');
+      expect(lex.tokenized[0].value).toEqual('\\w');    
+    });
+
+    it ('should tokenize set', function() {
+      var lex = new Lexer('[abc]');
+      lex._tokenize();
+      expect(lex.tokenized[0].name).toEqual('set');
+      expect(lex.tokenized[0].value).toEqual('[abc]');
+    });
+
+    it ('should tokenize quantifier', function() {
+      var lex = new Lexer('{1,4}');
+      lex._tokenize();
+      expect(lex.tokenized[0].name).toEqual('quantifier');
+      expect(lex.tokenized[0].value).toEqual('{1,4}');
+    });
+
+    it ('should tokenize combinations', function() {
+      var lex = new Lexer('\\d{2}/\\d{2}/\\d{4}');
+      lex._tokenize();
+      expect(lex.tokenized[0]).toEqual({ name: 'special', value: '\\d' });
+      expect(lex.tokenized[1]).toEqual({ name: 'quantifier', value: '{2}' });
+      expect(lex.tokenized[2]).toEqual({ name: 'literal', value: '/' });
+      expect(lex.tokenized[3]).toEqual({ name: 'special', value: '\\d' });
+      expect(lex.tokenized[4]).toEqual({ name: 'quantifier', value: '{2}' });
+      expect(lex.tokenized[5]).toEqual({ name: 'literal', value: '/' });
+      expect(lex.tokenized[6]).toEqual({ name: 'special', value: '\\d' });
+      expect(lex.tokenized[7]).toEqual({ name: 'quantifier', value: '{4}' });
+    });
+  });
+  
+  describe ('generation', function() {
+    
+    var ALPHA = JSONEnforcer.__exec__('ALPHA'),
+        ALPHA_COMBINED = JSONEnforcer.__exec__('ALPHA_COMBINED'),
+        NUMERIC = JSONEnforcer.__exec__('NUMERIC'),
+        ALPHA_NUMERIC = JSONEnforcer.__exec__('ALPHA_NUMERIC');
+    
+    it ('should generate an exact match for literal token', function() {
+      var lex = new Lexer('a');
+      expect(lex.generate()).toEqual('a');    
+    });
+        
+    describe ('special characters', function() {
+      
+      it ('should generate alpha numeric for \\w', function() {
+        var lex = new Lexer('\\w');
+        expect(ALPHA_NUMERIC.split('')).toContain(lex.generate());
+      });
+
+      it ('should generate numeric for \\d', function() {
+        var lex = new Lexer('\\d');
+        expect(NUMERIC.split('')).toContain(lex.generate());
       });
     });
 
-    describe('#is_number', function() {
-
-      it ('should return true for a number', function() {
-        expect(util.is_number(a_number)).toBe(true);
+    describe ('sets', function() {
+      
+      it ('should generate simple set', function() {
+        var lex = new Lexer('[abc]');
+        expect(lex.generate()).toMatch(/[abc]/);
+      });
+      
+      it ('should generate set with alpha range', function() {
+        var lex = new Lexer('[a-g]');
+        expect(lex.generate()).toMatch(/[a-g]/);        
+      });
+      
+      it ('should generate set with number range', function() {
+        var lex = new Lexer('[3-5]');
+        expect(lex.generate()).toMatch(/[3-5]/);
+      });
+      
+      it ('should generate set with special chars', function() {
+        var lex = new Lexer('[abc\\d]');
+        expect(lex.generate()).toMatch(/[abc\d]/);
+      });
+      
+      it ('should generate complex set', function() {
+        var lex = new Lexer('[a-g5-8]');
+        expect(lex.generate()).toMatch(/[a-g5-8]/);
       });
     });
-
-    describe('#is_array', function() {
-
-      it ('should return true for an array', function() {
-        expect(util.is_array(an_array)).toBe(true);
+    
+    describe ('quantifier', function() {
+      
+      it ('should generate 1 or more for +', function() {
+        var lex = new Lexer('a+');
+        expect(lex.generate()).toMatch(/a+/);        
       });
-
-      it ('should fail for an object', function() {
-        expect(util.is_array(an_object)).toBe(false);
+      
+      it ('should generate 0 or more for *', function() {
+        var lex = new Lexer('a*');
+        expect(lex.generate()).toMatch(/a*/);        
       });
-    });
-
-    describe('#is_object', function() {
-
-      it ('should return true for an object', function() {
-        expect(util.is_object(an_object)).toBe(true);
+      
+      it ('should generate a minimum', function() {
+        var lex = new Lexer('a{1,}');
+        expect(lex.generate()).toMatch(/a{1,}/);
       });
-
-      it ('should fail for an array', function() {
-        expect(util.is_object(an_array)).toBe(false);
+      
+      it ('should generate a maximum', function() {
+        var lex = new Lexer('a{,10}');
+        expect(lex.generate()).toMatch(/a{0,10}/);
+      });
+      
+      it ('should generate a range', function() {
+        var lex = new Lexer('a{1,4}');
+        expect(lex.generate()).toMatch(/a{1,4}/);
       });
     });
   });
+});
+
+describe ('JSONEnforcer.Template', function() {
   
   it ('should handle strings', function() {
     expect(new JSONEnforcer.Template({ name: 'string' }).enforce({ name: 'brendan' })).toBe(true);
@@ -108,82 +256,26 @@ describe ('JSONEnforcer.Template', function() {
       }
     })).toBe(false);
   });
-  
-  it ('should support multiple type checks', function() {
-    expect(new JSONEnforcer.Template({ name: 'string array' }).enforce({ name: 'brendan' })).toBe(true);
-    expect(new JSONEnforcer.Template({ name: 'string array' }).enforce({ name: [ 'brendan', 'bbarr' ] })).toBe(true);
-  });
 
 });
 
 describe ('JSONEnforcer.Stub', function() {
   
-  beforeEach (function() {
-    this.addMatchers({
-      toBeArray: function() {
-        var actual = this.actual;
-        return actual && typeof actual === 'object' && typeof actual.length !== 'undefined';
-      },
-      toBeObject: function() {
-        var actual = this.actual;
-        return actual && typeof actual === 'object' && typeof actual.length === 'undefined';
-      },
-      toBeNumber: function() {
-        return typeof this.actual === 'number';
+  var Person = {
+    name: 'string',
+    age: 'number',
+    hobbies: [ 'string optional' ],
+    friends: [
+      {
+        name: 'string',
+        age: 'number'
       }
-    });
+    ]
+  };
+  
+  it ('should', function() {
+    var template = new JSONEnforcer.Template(Person);
+    expect(template.enforce(template.stub())).toBe(true);
   });
   
-  describe ('basic stubbing', function() {
-    
-    it ('should stub strings', function() {
-      var template = { a: 'string' };
-      expect(new JSONEnforcer.Stub(template).generate()).toEqual({ a: 'Sample string, property: "a"' });
-    });
-
-    it ('should stub numbers', function() {
-      var template = { a: 'number' };
-      expect(new JSONEnforcer.Stub(template).generate().a).toBeNumber();      
-    });    
-
-    it ('should stub arrays', function() {
-      var template = { a: 'string', b: [ 'number' ] };
-      expect(new JSONEnforcer.Stub(template).generate().b).toBeArray();      
-      expect(new JSONEnforcer.Stub(template).generate().b[0]).toBeNumber();
-    });
-
-    it ('should stub objects', function() {
-      var template = { a: { b: [ 'number' ] }};
-      expect(new JSONEnforcer.Stub(template).generate().a.b).toBeArray();
-      expect(new JSONEnforcer.Stub(template).generate().a.b[0]).toBeNumber();
-    });
-
-    it ('should stub empty arrays', function() {
-      var template = { a: { b: [] }};
-      expect(new JSONEnforcer.Stub(template).generate().a.b).toBeArray();
-      expect(new JSONEnforcer.Stub(template).generate().a.b[0]).not.toBeDefined();
-    });
-
-    it ('should stub empty objects', function() {
-      var template = { a: {} };
-      expect(new JSONEnforcer.Stub(template).generate().a).toBeObject();
-    });
-
-    it ('should stub nested objects', function() {
-      var template = { a: { b: 'string', c: [ [ { d: 'number' } ] ]}};
-      expect(new JSONEnforcer.Stub(template).generate().a.c[0][0].d).toBeNumber();
-    });
-  });
-  
-  describe ('complex stubbing rules', function() {
-    
-    it ('should stub with number range', function() {
-      var template = { a: 'number[1-1]' }
-    });
-    
-    it ('should stub with string length range', function() {
-      
-    });
-    
-  });
 });  
